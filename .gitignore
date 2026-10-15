@@ -41,3 +41,8 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase service-account key (secret) — upload with `eas credentials`, never commit
+*firebase-adminsdk*.json
+# Windows download metadata
+*:Zone.Identifier

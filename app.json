@@ -59,6 +59,16 @@
     },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d51d3e93-5020-4bfe-ad99-49c63217454f"
+      }
+    },
+    "owner": "crescian",
+    "updates": {
+      "url": "https://u.expo.dev/d51d3e93-5020-4bfe-ad99-49c63217454f"
     }
   }
 }

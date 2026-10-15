@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "918520961890",
+    "project_id": "ict-support-mobile",
+    "storage_bucket": "ict-support-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:918520961890:android:8d2f83e690ddf7af57aa3b",
+        "android_client_info": {
+          "package_name": "com.leoniogroup.ictsupport"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmPODS3533fEJge2IA8fhOGyGrF6vGn7s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
