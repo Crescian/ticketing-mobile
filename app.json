@@ -44,6 +44,13 @@
           "cameraPermission": "Take a photo of the problem for your IT support request.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2d5a2d",
+          "defaultChannel": "default"
+        }
       ]
     ],
     "experiments": {

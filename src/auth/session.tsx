@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { ApiError, setApiToken, setUnauthorizedHandler } from '@/api/client';
 import * as endpoints from '@/api/endpoints';
 import type { User } from '@/api/types';
+import { takeStoredPushToken } from '@/notifications/push';
 
 const TOKEN_KEY = 'auth_token';
 
@@ -93,8 +94,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         await startSession(access_token);
       },
       signOut: async () => {
-        // Best effort — the local sign-out happens even if the server is unreachable.
-        await endpoints.logout().catch(() => undefined);
+        // Best effort — the local sign-out happens even if the server is
+        // unreachable. Sending the push token stops pushes to this phone.
+        const pushToken = await takeStoredPushToken();
+        await endpoints.logout(pushToken).catch(() => undefined);
         await clearSession();
       },
     }),

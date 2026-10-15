@@ -1,4 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import * as SecureStore from 'expo-secure-store';
+import { useCallback } from 'react';
 
 import * as endpoints from '@/api/endpoints';
 import type { Message, TicketDetail, TicketPhase, UploadFile, User } from '@/api/types';
@@ -105,4 +107,40 @@ export function useSendMessage(ticketId: string, me: User | null) {
       queryClient.setQueryData<ChatMessage[]>(key, (old = []) => old.map((m) => (m.id === tempId ? { ...m, pending: false, failed: true } : m)));
     },
   });
+}
+
+// ── Updates feed (bell tab) ─────────────────────────────────────────────────
+// The feed is the last 7 days of IT activity on the employee's requests.
+// "New" means newer than the last time the Updates tab was opened, a
+// timestamp kept on the phone.
+const UPDATES_SEEN_KEY = 'updates_seen_at';
+const FEED_POLL_MS = 60_000;
+
+export const feedKeys = { feed: ['notifications'] as const, seen: ['notifications', 'seen'] as const };
+
+export function useNotificationFeed() {
+  return useQuery({ queryKey: feedKeys.feed, queryFn: () => endpoints.getNotifications(), refetchInterval: FEED_POLL_MS });
+}
+
+export function useUpdatesSeenAt() {
+  return useQuery({ queryKey: feedKeys.seen, queryFn: () => SecureStore.getItemAsync(UPDATES_SEEN_KEY), staleTime: Infinity });
+}
+
+export function useMarkUpdatesSeen() {
+  const queryClient = useQueryClient();
+  return useCallback(
+    async (serverTime: string) => {
+      await SecureStore.setItemAsync(UPDATES_SEEN_KEY, serverTime);
+      queryClient.setQueryData(feedKeys.seen, serverTime);
+    },
+    [queryClient],
+  );
+}
+
+export function useNewUpdatesCount() {
+  const feed = useNotificationFeed();
+  const seenAt = useUpdatesSeenAt();
+  if (!feed.data || seenAt.isPending) return 0;
+  const since = seenAt.data ? new Date(seenAt.data).getTime() : 0;
+  return feed.data.notifications.filter((n) => new Date(n.at).getTime() > since).length;
 }

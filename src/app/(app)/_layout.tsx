@@ -1,10 +1,12 @@
 import { Stack } from 'expo-router';
 
 import { useTheme } from '@/hooks/use-theme';
+import { usePushNotifications } from '@/notifications/use-push-notifications';
 
 // Signed-in area: the tab bar, with ticket screens pushed on top of it.
 export default function AppLayout() {
   const theme = useTheme();
+  usePushNotifications();
 
   return (
     <Stack
