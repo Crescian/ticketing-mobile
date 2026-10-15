@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from 'react-native';
 
 import { Radius, Spacing } from '@/constants/theme';
@@ -47,20 +48,39 @@ export function Button({ title, onPress, loading, disabled, variant = 'primary' 
 
 type FieldProps = TextInputProps & { label: string; error?: string };
 
-export function Field({ label, error, style, ...props }: FieldProps) {
+// Text input with a label and error line. Password inputs (secureTextEntry)
+// get an eye button to show/hide what's typed.
+export function Field({ label, error, style, secureTextEntry, ...props }: FieldProps) {
   const theme = useTheme();
+  const [revealed, setRevealed] = useState(false);
+  const isPassword = !!secureTextEntry;
+
   return (
     <View style={{ gap: Spacing.one }}>
       <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
-      <TextInput
-        placeholderTextColor={theme.textSecondary}
-        style={[
-          styles.input,
-          { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: error ? theme.danger : theme.border },
-          style,
-        ]}
-        {...props}
-      />
+      <View>
+        <TextInput
+          placeholderTextColor={theme.textSecondary}
+          secureTextEntry={isPassword && !revealed}
+          style={[
+            styles.input,
+            { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: error ? theme.danger : theme.border },
+            isPassword && styles.inputWithIcon,
+            style,
+          ]}
+          {...props}
+        />
+        {isPassword ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? 'Hide password' : 'Show password'}
+            onPress={() => setRevealed((v) => !v)}
+            hitSlop={8}
+            style={styles.eye}>
+            <Ionicons name={revealed ? 'eye-off-outline' : 'eye-outline'} size={22} color={theme.textSecondary} />
+          </Pressable>
+        ) : null}
+      </View>
       {error ? <Text style={[styles.error, { color: theme.danger }]}>{error}</Text> : null}
     </View>
   );
@@ -78,5 +98,7 @@ const styles = StyleSheet.create({
   buttonText: { fontSize: 16, fontWeight: '600' },
   label: { fontSize: 14, fontWeight: '500' },
   input: { minHeight: 48, borderRadius: Radius.sm, borderWidth: 1, paddingHorizontal: Spacing.three, fontSize: 16 },
+  inputWithIcon: { paddingRight: 48 },
+  eye: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, alignItems: 'center', justifyContent: 'center' },
   error: { fontSize: 13 },
 });
