@@ -56,6 +56,12 @@ export default function TicketDetailScreen() {
           {t.assigned_to ? <Text style={{ color: theme.textSecondary }}>👤 Handled by {t.assigned_to}</Text> : null}
         </Card>
 
+        <Button
+          title={t.unread_messages ? `💬 Chat with IT (${t.unread_messages} new)` : '💬 Chat with IT'}
+          variant={t.unread_messages ? 'primary' : 'secondary'}
+          onPress={() => router.push({ pathname: '/ticket/[id]/chat', params: { id: t.id } })}
+        />
+
         <Actions ticket={t} />
 
         <Section title="Details">

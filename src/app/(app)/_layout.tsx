@@ -17,6 +17,7 @@ export default function AppLayout() {
       <Stack.Screen name="ticket/new" options={{ title: 'New Request', presentation: 'modal' }} />
       <Stack.Screen name="ticket/[id]/index" options={{ title: 'Request' }} />
       <Stack.Screen name="ticket/[id]/edit" options={{ title: 'Edit Request', presentation: 'modal' }} />
+      <Stack.Screen name="ticket/[id]/chat" options={{ title: 'Chat' }} />
     </Stack>
   );
 }
