@@ -144,3 +144,8 @@ export function useNewUpdatesCount() {
   const since = seenAt.data ? new Date(seenAt.data).getTime() : 0;
   return feed.data.notifications.filter((n) => new Date(n.at).getTime() > since).length;
 }
+
+// "Available IT" — who on the IT team was active on the web in the last 5 minutes.
+export function useITTeam() {
+  return useQuery({ queryKey: ['it-team'], queryFn: endpoints.getITTeam, refetchInterval: 120_000 });
+}

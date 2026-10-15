@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { keys, useTicketCounts, useTicketList } from '@/api/queries';
 import type { TicketPhase } from '@/api/types';
 import { useSession } from '@/auth/session';
+import { ITTeamStrip } from '@/components/it-team';
 import { TicketCard } from '@/components/ticket-card';
 import { Button, ErrorText, Screen } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
@@ -78,6 +79,8 @@ export default function MyRequestsScreen() {
             <Button title="+ New Request" onPress={() => router.push('/ticket/new')} />
           </View>
         </View>
+
+        <ITTeamStrip />
 
         <TextInput
           value={searchInput}

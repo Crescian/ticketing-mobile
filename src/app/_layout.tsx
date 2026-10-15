@@ -1,4 +1,5 @@
-import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as Network from 'expo-network';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -6,6 +7,7 @@ import { AppState, Platform, useColorScheme } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { SessionProvider, useSession } from '@/auth/session';
+import { OfflineBanner } from '@/components/offline-banner';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -14,6 +16,14 @@ SplashScreen.preventAutoHideAsync();
 focusManager.setEventListener((handleFocus) => {
   const subscription = AppState.addEventListener('change', (state) => {
     if (Platform.OS !== 'web') handleFocus(state === 'active');
+  });
+  return () => subscription.remove();
+});
+
+// Pause requests while offline and refetch when the connection returns.
+onlineManager.setEventListener((setOnline) => {
+  const subscription = Network.addNetworkStateListener((state) => {
+    setOnline(state.isConnected !== false && state.isInternetReachable !== false);
   });
   return () => subscription.remove();
 });
@@ -36,6 +46,7 @@ export default function RootLayout() {
       <SessionProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <RootNavigator />
+          <OfflineBanner />
         </ThemeProvider>
       </SessionProvider>
     </QueryClientProvider>
