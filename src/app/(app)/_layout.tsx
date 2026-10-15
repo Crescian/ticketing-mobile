@@ -1,24 +1,22 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Stack } from 'expo-router';
 
 import { useTheme } from '@/hooks/use-theme';
 
-export default function AppTabs() {
+// Signed-in area: the tab bar, with ticket screens pushed on top of it.
+export default function AppLayout() {
   const theme = useTheme();
 
   return (
-    <NativeTabs
-      backgroundColor={theme.backgroundElement}
-      indicatorColor={theme.backgroundSelected}
-      labelStyle={{ selected: { color: theme.text } }}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>My Requests</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon src={require('@/assets/images/tabIcons/home.png')} renderingMode="template" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon src={require('@/assets/images/tabIcons/explore.png')} renderingMode="template" />
-      </NativeTabs.Trigger>
-    </NativeTabs>
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: theme.backgroundElement },
+        headerTintColor: theme.text,
+        contentStyle: { backgroundColor: theme.background },
+      }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="ticket/new" options={{ title: 'New Request', presentation: 'modal' }} />
+      <Stack.Screen name="ticket/[id]/index" options={{ title: 'Request' }} />
+      <Stack.Screen name="ticket/[id]/edit" options={{ title: 'Edit Request', presentation: 'modal' }} />
+    </Stack>
   );
 }
