@@ -1,3 +1,11 @@
+import {
+  Nunito_400Regular,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+  Nunito_900Black,
+  useFonts,
+} from '@expo-google-fonts/nunito';
 import { focusManager, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as Network from 'expo-network';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
@@ -7,6 +15,7 @@ import { AppState, Platform, useColorScheme } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { SessionProvider, useSession } from '@/auth/session';
+import { Colors, Fonts } from '@/constants/theme';
 import { OfflineBanner } from '@/components/offline-banner';
 
 SplashScreen.preventAutoHideAsync();
@@ -38,13 +47,38 @@ const queryClient = new QueryClient({
   },
 });
 
+// Navigation chrome (screen background, headers, borders) in the app palette.
+function navigationTheme(scheme: 'light' | 'dark') {
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const theme = Colors[scheme];
+  return {
+    ...base,
+    colors: {
+      ...base.colors,
+      primary: theme.primary,
+      background: theme.background,
+      card: theme.backgroundElement,
+      text: theme.text,
+      border: theme.border,
+      notification: theme.danger,
+    },
+    fonts: {
+      ...base.fonts,
+      regular: { fontFamily: Fonts.regular, fontWeight: '400' as const },
+      medium: { fontFamily: Fonts.semibold, fontWeight: '600' as const },
+      bold: { fontFamily: Fonts.bold, fontWeight: '700' as const },
+      heavy: { fontFamily: Fonts.extrabold, fontWeight: '800' as const },
+    },
+  };
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={navigationTheme(colorScheme === 'dark' ? 'dark' : 'light')}>
           <RootNavigator />
           <OfflineBanner />
         </ThemeProvider>
@@ -57,12 +91,22 @@ export default function RootLayout() {
 // signed out, the account-setup flow until it's finished, then the app.
 function RootNavigator() {
   const { status } = useSession();
+  // Nunito, the web's font — held behind the splash screen until loaded (a
+  // load error falls back to the system font rather than blocking the app).
+  const [fontsLoaded, fontError] = useFonts({
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+    Nunito_900Black,
+  });
+  const ready = status !== 'loading' && (fontsLoaded || !!fontError);
 
   useEffect(() => {
-    if (status !== 'loading') SplashScreen.hideAsync();
-  }, [status]);
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
 
-  if (status === 'loading') return null;
+  if (!ready) return null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

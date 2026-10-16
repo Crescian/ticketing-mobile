@@ -1,7 +1,9 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNetworkState } from 'expo-network';
 import { StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 // Shown over the top of every screen while the phone has no internet. Data
@@ -16,12 +18,13 @@ export function OfflineBanner() {
 
   return (
     <SafeAreaView edges={['top']} pointerEvents="none" style={[styles.banner, { backgroundColor: theme.warning }]}>
+      <Ionicons name="cloud-offline-outline" size={14} color="#ffffff" />
       <Text style={styles.text}>{"You're offline — showing saved data"}</Text>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  banner: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingBottom: 6 },
-  text: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  banner: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.one, paddingBottom: 6 },
+  text: { color: '#FFFFFF', fontFamily: Fonts.bold, fontSize: 13 },
 });

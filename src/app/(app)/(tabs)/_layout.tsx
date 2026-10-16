@@ -1,6 +1,7 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { useNewUpdatesCount, useUnread } from '@/api/queries';
+import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function AppTabs() {
@@ -12,7 +13,11 @@ export default function AppTabs() {
     <NativeTabs
       backgroundColor={theme.backgroundElement}
       indicatorColor={theme.backgroundSelected}
-      labelStyle={{ selected: { color: theme.text } }}>
+      iconColor={{ default: theme.textMuted, selected: theme.primary }}
+      labelStyle={{
+        default: { fontFamily: Fonts.semibold, color: theme.textMuted },
+        selected: { fontFamily: Fonts.bold, color: theme.primary },
+      }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>My Requests</NativeTabs.Trigger.Label>
         {/* Unread chat messages from IT across all of the employee's requests. */}

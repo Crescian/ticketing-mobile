@@ -2,6 +2,7 @@ import { router, Stack } from 'expo-router';
 import { useEffect } from 'react';
 
 import { useSession } from '@/auth/session';
+import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { usePushNotifications } from '@/notifications/use-push-notifications';
 
@@ -20,8 +21,11 @@ export default function AppLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: theme.backgroundElement },
-        headerTintColor: theme.text,
+        // Dark green header like the web's navbar.
+        headerStyle: { backgroundColor: theme.header },
+        headerTintColor: theme.onHeader,
+        headerTitleStyle: { fontFamily: Fonts.bold, fontSize: 17 },
+        headerShadowVisible: false,
         contentStyle: { backgroundColor: theme.background },
       }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

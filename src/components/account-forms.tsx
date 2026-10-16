@@ -1,19 +1,17 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+
 
 import { ApiError } from '@/api/client';
 import { getOrgTree, updateOrgInfo, updatePassword } from '@/api/endpoints';
 import type { User } from '@/api/types';
 import { SelectField } from '@/components/select-field';
-import { Button, Card, ErrorText, Field } from '@/components/ui';
+import { Button, Card, ErrorText, Field, Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 
 // Department (one-time) and password forms — used by the first-login setup
 // screen and by Profile.
 export function OrgInfoForm({ user, onDone }: { user: User; onDone: (user: User) => void }) {
-  const theme = useTheme();
   const tree = useQuery({ queryKey: ['org-tree'], queryFn: getOrgTree });
   const [buId, setBuId] = useState<string | null>(user.business_unit?.id ?? null);
   const [companyId, setCompanyId] = useState<string | null>(user.company?.id ?? null);
@@ -32,10 +30,10 @@ export function OrgInfoForm({ user, onDone }: { user: User; onDone: (user: User)
 
   return (
     <Card style={{ gap: Spacing.three }}>
-      <Text style={[styles.cardTitle, { color: theme.text }]}>Where do you work?</Text>
-      <Text style={{ color: theme.textSecondary }}>
+      <Txt variant="heading">Where do you work?</Txt>
+      <Txt color="textSecondary">
         IT uses this to route your requests. You can set it once — after that, ask IT to change it.
-      </Text>
+      </Txt>
       <ErrorText message={tree.error?.message} />
 
       <SelectField
@@ -71,13 +69,12 @@ export function OrgInfoForm({ user, onDone }: { user: User; onDone: (user: User)
       <Field label="Position (optional)" value={position} onChangeText={setPosition} placeholder="e.g. Accountant" error={error?.fieldError('position')} />
 
       <ErrorText message={error && !Object.keys(error.errors).length ? error.message : null} />
-      <Button title="Save and continue" onPress={() => save.mutate()} loading={save.isPending} disabled={!departmentId} />
+      <Button title="Save and continue" icon="checkmark" onPress={() => save.mutate()} loading={save.isPending} disabled={!departmentId} />
     </Card>
   );
 }
 
 export function PasswordForm({ onDone, temporary = false }: { onDone: (user: User) => void; temporary?: boolean }) {
-  const theme = useTheme();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -91,9 +88,9 @@ export function PasswordForm({ onDone, temporary = false }: { onDone: (user: Use
 
   return (
     <Card style={{ gap: Spacing.three }}>
-      <Text style={[styles.cardTitle, { color: theme.text }]}>{temporary ? 'Set your own password' : 'Change password'}</Text>
+      <Txt variant="heading">{temporary ? 'Set your own password' : 'Change password'}</Txt>
       {temporary ? (
-        <Text style={{ color: theme.textSecondary }}>Use the temporary password from your welcome email as the current password.</Text>
+        <Txt color="textSecondary">Use the temporary password from your welcome email as the current password.</Txt>
       ) : null}
 
       <Field label={temporary ? 'Current (temporary) password' : 'Current password'} value={current} onChangeText={setCurrent} secureTextEntry autoComplete="current-password" error={error?.fieldError('current_password')} />
@@ -103,6 +100,7 @@ export function PasswordForm({ onDone, temporary = false }: { onDone: (user: Use
       <ErrorText message={error && !Object.keys(error.errors).length ? error.message : null} />
       <Button
         title="Save password"
+        icon="lock-closed-outline"
         onPress={() => save.mutate()}
         loading={save.isPending}
         disabled={!current || next.length < 8 || next !== confirm}
@@ -110,7 +108,3 @@ export function PasswordForm({ onDone, temporary = false }: { onDone: (user: Use
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  cardTitle: { fontSize: 18, fontWeight: '700' },
-});

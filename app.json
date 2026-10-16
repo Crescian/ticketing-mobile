@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ICT Support",
+    "name": "LGICT Support",
     "slug": "ticketing-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,12 +8,11 @@
     "scheme": "ictsupport",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.leoniogroup.ictsupport"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#1a3c1a",
+        "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -29,9 +28,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1a3c1a",
+          "backgroundColor": "#f5f0e8",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 160
+          "imageWidth": 220
         }
       ],
       "expo-secure-store",

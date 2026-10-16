@@ -1,11 +1,12 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useMarkUpdatesSeen, useNotificationFeed, useUpdatesSeenAt } from '@/api/queries';
 import type { AppNotification } from '@/api/types';
-import { Button, ErrorText, Screen } from '@/components/ui';
+import { Button, EmptyState, Screen, ScreenHeader, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { timeAgo } from '@/lib/format';
@@ -39,25 +40,25 @@ export default function UpdatesScreen() {
   return (
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <Text style={[styles.title, { color: theme.text }]}>Updates</Text>
+        <ScreenHeader title="Updates" subtitle="Last 7 days on your requests" />
         <FlatList
           data={feed.data?.notifications ?? []}
           keyExtractor={(n, i) => `${n.type}-${n.ticket_id}-${n.at}-${i}`}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={feed.isRefetching} onRefresh={feed.refetch} />}
+          refreshControl={<RefreshControl refreshing={feed.isRefetching} onRefresh={feed.refetch} tintColor={theme.primary} colors={[theme.primary]} />}
           renderItem={({ item }) => <UpdateRow item={item} isNew={new Date(item.at).getTime() > since} />}
           ListEmptyComponent={
             feed.isPending ? (
-              <ActivityIndicator style={{ marginTop: Spacing.five }} />
+              <ActivityIndicator style={{ marginTop: Spacing.six }} color={theme.primary} />
             ) : feed.error ? (
-              <View style={styles.empty}>
-                <ErrorText message={feed.error.message} />
-                <Button title="Try again" variant="secondary" onPress={() => feed.refetch()} />
-              </View>
+              <EmptyState
+                icon="cloud-offline-outline"
+                title="Couldn't load updates"
+                message={feed.error.message}
+                action={<Button title="Try again" variant="secondary" onPress={() => feed.refetch()} />}
+              />
             ) : (
-              <Text style={[styles.empty, { color: theme.textSecondary }]}>
-                No updates in the last 7 days. When IT works on your requests or messages you, it shows up here.
-              </Text>
+              <EmptyState icon="notifications-outline" title="All caught up" message="When IT works on your requests or messages you, it shows up here." />
             )
           }
         />
@@ -68,32 +69,31 @@ export default function UpdatesScreen() {
 
 function UpdateRow({ item, isNew }: { item: AppNotification; isNew: boolean }) {
   const theme = useTheme();
+  const isMessage = item.type === 'new_message';
   const open = () =>
-    item.type === 'new_message'
+    isMessage
       ? router.push({ pathname: '/ticket/[id]/chat', params: { id: item.ticket_id } })
       : router.push({ pathname: '/ticket/[id]', params: { id: item.ticket_id } });
 
   return (
     <Pressable
       onPress={open}
+      accessibilityRole="button"
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: pressed ? theme.backgroundSelected : theme.backgroundElement, borderColor: isNew ? theme.primary : theme.border },
+        { backgroundColor: theme.backgroundElement, borderColor: isNew ? theme.primary : theme.border },
+        pressed && { backgroundColor: theme.backgroundSelected },
       ]}>
-      <Text style={styles.icon}>{item.type === 'new_message' ? '💬' : '🔔'}</Text>
+      <View style={[styles.icon, { backgroundColor: isMessage ? theme.infoSoft : theme.backgroundSelected }]}>
+        <Ionicons name={isMessage ? 'chatbubble-ellipses' : 'git-commit-outline'} size={18} color={isMessage ? theme.info : theme.primary} />
+      </View>
       <View style={{ flex: 1, gap: 2 }}>
         <View style={styles.rowTop}>
-          <Text style={{ color: theme.text, fontWeight: isNew ? '700' : '600', flexShrink: 1 }} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{timeAgo(item.at)}</Text>
+          <Txt variant={isNew ? 'heading' : 'bodyStrong'} numberOfLines={1} style={{ flexShrink: 1, fontSize: 15 }}>{item.title}</Txt>
+          <Txt variant="caption" color="textSecondary">{timeAgo(item.at)}</Txt>
         </View>
-        {item.body ? (
-          <Text style={{ color: theme.text }} numberOfLines={2}>
-            {item.body}
-          </Text>
-        ) : null}
-        {item.ticket_number ? <Text style={{ color: theme.textSecondary, fontSize: 12 }}>#{item.ticket_number}</Text> : null}
+        {item.body ? <Txt numberOfLines={2}>{item.body}</Txt> : null}
+        {item.ticket_number ? <Txt variant="caption" color="textSecondary">#{item.ticket_number}</Txt> : null}
       </View>
       {isNew ? <View style={[styles.dot, { backgroundColor: theme.danger }]} /> : null}
     </Pressable>
@@ -101,11 +101,9 @@ function UpdateRow({ item, isNew }: { item: AppNotification; isNew: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 26, fontWeight: '700', paddingHorizontal: Spacing.three, paddingTop: Spacing.three },
-  list: { padding: Spacing.three, gap: Spacing.two, flexGrow: 1 },
-  empty: { textAlign: 'center', marginTop: Spacing.five, paddingHorizontal: Spacing.four, gap: Spacing.three },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.three, borderRadius: Radius.md, borderWidth: 1, padding: Spacing.three },
+  list: { padding: Spacing.four, gap: Spacing.two, flexGrow: 1 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.three, borderRadius: Radius.lg, borderWidth: 1, padding: Spacing.three },
+  icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.two },
-  icon: { fontSize: 20 },
   dot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
 });

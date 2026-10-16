@@ -1,6 +1,7 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { cancelTicket, confirmTicket, rateTicket } from '@/api/endpoints';
@@ -10,8 +11,8 @@ import { AttachmentList } from '@/components/attachments';
 import { RateSheet } from '@/components/rate-sheet';
 import { StatusLabel } from '@/components/ticket-card';
 import { Tracker } from '@/components/tracker';
-import { Button, Card, ErrorText } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { Badge, Button, Card, CountBubble, EmptyState, InfoRow, Loading, Notice, SectionTitle, Txt } from '@/components/ui';
+import { priorityTone, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDateTime } from '@/lib/format';
 import { openProtectedFile } from '@/lib/files';
@@ -29,10 +30,10 @@ export default function TicketDetailScreen() {
   const ticket = useTicket(id);
 
   if (!ticket.data) {
-    return (
-      <View style={styles.center}>
-        {ticket.error ? <ErrorText message={ticket.error.message} /> : <ActivityIndicator />}
-      </View>
+    return ticket.error ? (
+      <EmptyState icon="alert-circle-outline" title="Couldn't load this request" message={ticket.error.message} />
+    ) : (
+      <Loading />
     );
   }
 
@@ -43,63 +44,92 @@ export default function TicketDetailScreen() {
       <Stack.Screen options={{ title: `#${t.ticket_number}` }} />
       <ScrollView
         contentContainerStyle={styles.container}
-        refreshControl={<RefreshControl refreshing={ticket.isRefetching} onRefresh={ticket.refetch} />}>
+        refreshControl={<RefreshControl refreshing={ticket.isRefetching} onRefresh={ticket.refetch} tintColor={theme.primary} colors={[theme.primary]} />}>
         <Card>
           <View style={styles.row}>
-            <Text style={{ color: theme.textSecondary }}>Submitted {formatDateTime(t.created_at)}</Text>
             <StatusLabel ticket={t} />
+            {t.priority ? <Badge label={t.priority} tone={priorityTone(t.priority)} icon="flag-outline" /> : null}
           </View>
-          <Text style={[styles.subject, { color: theme.text }]}>{t.subject}</Text>
+          <Txt variant="title">{t.subject}</Txt>
           <Tracker ticket={t} />
-          {t.is_on_hold && t.hold_reason ? <Notice tone="warning" text={`On hold: ${t.hold_reason}`} /> : null}
-          {t.expected_start ? <Text style={{ color: theme.textSecondary }}>⏱ {t.expected_start}</Text> : null}
-          {t.assigned_to ? <Text style={{ color: theme.textSecondary }}>👤 Handled by {t.assigned_to}</Text> : null}
+          {t.is_on_hold && t.hold_reason ? <Notice tone="warning" icon="pause-circle" text={`On hold: ${t.hold_reason}`} /> : null}
+          <View style={{ gap: Spacing.two }}>
+            {t.expected_start ? <Meta icon="time-outline" text={t.expected_start} /> : null}
+            {t.assigned_to ? <Meta icon="person-outline" text={`Handled by ${t.assigned_to}`} /> : null}
+            <Meta icon="calendar-outline" text={`Submitted ${formatDateTime(t.created_at)}`} />
+          </View>
         </Card>
 
         <Button
-          title={t.unread_messages ? `💬 Chat with IT (${t.unread_messages} new)` : '💬 Chat with IT'}
-          variant={t.unread_messages ? 'primary' : 'secondary'}
+          title="Chat with IT"
+          icon="chatbubbles-outline"
+          variant={t.unread_messages ? 'primary' : 'outline'}
           onPress={() => router.push({ pathname: '/ticket/[id]/chat', params: { id: t.id } })}
         />
+        {t.unread_messages ? (
+          <View style={styles.unreadHint}>
+            <CountBubble count={t.unread_messages} />
+            <Txt variant="caption" color="danger">new message{t.unread_messages > 1 ? 's' : ''} from IT</Txt>
+          </View>
+        ) : null}
 
         <Actions ticket={t} />
 
         <Section title="Details">
-          <Detail label="Problem" value={t.concern} />
-          <Detail label="More details" value={t.request_details} />
-          <Detail label="Device / asset" value={t.asset} />
-          <Detail label="Location" value={t.location} />
-          <Detail label="Category" value={[t.category, t.subcategory].filter(Boolean).join(' › ') || null} />
-          <Detail label="Priority" value={t.priority} />
+          <InfoRow icon="document-text-outline" label="Problem" value={t.concern} />
+          <InfoRow icon="reader-outline" label="More details" value={t.request_details} />
+          <InfoRow icon="desktop-outline" label="Device / asset" value={t.asset} />
+          <InfoRow icon="location-outline" label="Location" value={t.location} />
+          <InfoRow icon="pricetag-outline" label="Category" value={[t.category, t.subcategory].filter(Boolean).join(' › ') || null} />
         </Section>
 
         {t.attachments.length ? (
-          <Section title="Attachments">
+          <Section title={`Attachments (${t.attachments.length})`}>
             <AttachmentList attachments={t.attachments} />
           </Section>
         ) : null}
 
         {t.feedback ? (
           <Section title="Your rating">
-            <Text style={{ color: '#F5B301', fontSize: 22 }}>{'★'.repeat(t.feedback.rating)}<Text style={{ color: theme.border }}>{'★'.repeat(5 - t.feedback.rating)}</Text></Text>
-            {t.feedback.comments ? <Text style={{ color: theme.text }}>{t.feedback.comments}</Text> : null}
+            <View style={styles.stars}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Ionicons key={n} name={n <= t.feedback!.rating ? 'star' : 'star-outline'} size={22} color="#F5B301" />
+              ))}
+            </View>
+            {t.feedback.comments ? <Txt>{t.feedback.comments}</Txt> : null}
           </Section>
         ) : null}
 
         <Section title="History">
           {t.history.map((h, i) => (
-            <View key={i} style={[styles.historyItem, { borderLeftColor: i === 0 ? theme.primary : theme.border }]}>
-              <Text style={{ color: theme.text, fontWeight: '600' }}>{h.status}</Text>
-              {h.notes ? <Text style={{ color: theme.text }}>{h.notes}</Text> : null}
-              <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
-                {formatDateTime(h.at)}
-                {h.by ? ` · ${h.by}` : ''}
-              </Text>
+            <View key={i} style={styles.historyItem}>
+              <View style={styles.timeline}>
+                <View style={[styles.timelineDot, { backgroundColor: i === 0 ? theme.primary : theme.border }]} />
+                {i < t.history.length - 1 ? <View style={[styles.timelineLine, { backgroundColor: theme.border }]} /> : null}
+              </View>
+              <View style={{ flex: 1, gap: 2, paddingBottom: Spacing.three }}>
+                <Txt variant="bodyStrong">{h.status}</Txt>
+                {h.notes ? <Txt color="textSecondary">{h.notes}</Txt> : null}
+                <Txt variant="caption" color="textMuted">
+                  {formatDateTime(h.at)}
+                  {h.by ? ` · ${h.by}` : ''}
+                </Txt>
+              </View>
             </View>
           ))}
         </Section>
       </ScrollView>
     </>
+  );
+}
+
+function Meta({ icon, text }: { icon: 'time-outline' | 'person-outline' | 'calendar-outline'; text: string }) {
+  const theme = useTheme();
+  return (
+    <View style={styles.meta}>
+      <Ionicons name={icon} size={16} color={theme.textSecondary} />
+      <Txt color="textSecondary" style={{ flex: 1 }}>{text}</Txt>
+    </View>
   );
 }
 
@@ -141,16 +171,26 @@ function Actions({ ticket }: { ticket: TicketDetail }) {
     <View style={{ gap: Spacing.two }}>
       {ticket.can_confirm ? (
         <>
-          <Notice tone="primary" text="IT has resolved your request. Please review the service report and confirm the fix." />
-          <Button title="Yes, it's fixed — close request" onPress={askConfirm} loading={confirm.isPending} />
+          <Notice tone="success" icon="checkmark-circle" text="IT has resolved your request. Please review the service report and confirm the fix." />
+          <Button title="Yes, it's fixed — close request" icon="checkmark-done" onPress={askConfirm} loading={confirm.isPending} />
         </>
       ) : null}
-      {ticket.can_rate ? <Button title="Rate this request" onPress={() => setRating(true)} /> : null}
-      {ticket.has_service_report ? <Button title="View service report (PDF)" variant="secondary" onPress={openReport} loading={downloading} /> : null}
-      {ticket.can_edit ? (
-        <Button title="Edit request" variant="secondary" onPress={() => router.push({ pathname: '/ticket/[id]/edit', params: { id: ticket.id } })} />
+      {ticket.can_rate ? <Button title="Rate this request" icon="star-outline" onPress={() => setRating(true)} /> : null}
+      {ticket.has_service_report ? <Button title="View service report (PDF)" icon="document-attach-outline" variant="secondary" onPress={openReport} loading={downloading} /> : null}
+      {ticket.can_edit || ticket.can_cancel ? (
+        <View style={styles.buttonRow}>
+          {ticket.can_edit ? (
+            <Button
+              title="Edit"
+              icon="create-outline"
+              variant="outline"
+              style={{ flex: 1 }}
+              onPress={() => router.push({ pathname: '/ticket/[id]/edit', params: { id: ticket.id } })}
+            />
+          ) : null}
+          {ticket.can_cancel ? <Button title="Cancel request" icon="close-circle-outline" variant="danger" style={{ flex: 1 }} onPress={askCancel} loading={cancel.isPending} /> : null}
+        </View>
       ) : null}
-      {ticket.can_cancel ? <Button title="Cancel request" variant="danger" onPress={askCancel} loading={cancel.isPending} /> : null}
 
       <RateSheet
         visible={rating && ticket.can_rate}
@@ -163,43 +203,24 @@ function Actions({ ticket }: { ticket: TicketDetail }) {
   );
 }
 
-function Notice({ text, tone }: { text: string; tone: 'primary' | 'warning' }) {
-  const theme = useTheme();
-  const color = tone === 'warning' ? theme.warning : theme.primary;
-  return (
-    <View style={[styles.notice, { borderColor: color, backgroundColor: theme.backgroundSelected }]}>
-      <Text style={{ color: theme.text }}>{text}</Text>
-    </View>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  const theme = useTheme();
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View style={{ gap: Spacing.two }}>
-      <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{title.toUpperCase()}</Text>
+      <SectionTitle>{title}</SectionTitle>
       <Card>{children}</Card>
     </View>
   );
 }
 
-function Detail({ label, value }: { label: string; value: string | null | undefined }) {
-  const theme = useTheme();
-  if (!value) return null;
-  return (
-    <View style={{ gap: 2 }}>
-      <Text style={{ color: theme.textSecondary, fontSize: 13 }}>{label}</Text>
-      <Text style={{ color: theme.text, fontSize: 15 }}>{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.four },
-  container: { padding: Spacing.three, gap: Spacing.three, paddingBottom: Spacing.six },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.two },
-  subject: { fontSize: 20, fontWeight: '700' },
-  sectionTitle: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  historyItem: { borderLeftWidth: 3, paddingLeft: Spacing.three, paddingVertical: Spacing.one, gap: 2 },
-  notice: { borderLeftWidth: 4, borderRadius: 8, padding: Spacing.three },
+  container: { padding: Spacing.four, gap: Spacing.four, paddingBottom: Spacing.seven },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexWrap: 'wrap' },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  unreadHint: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, marginTop: -Spacing.two, alignSelf: 'center' },
+  buttonRow: { flexDirection: 'row', gap: Spacing.two },
+  stars: { flexDirection: 'row', gap: 4 },
+  historyItem: { flexDirection: 'row', gap: Spacing.three },
+  timeline: { alignItems: 'center', width: 12 },
+  timelineDot: { width: 12, height: 12, borderRadius: 6, marginTop: 4 },
+  timelineLine: { flex: 1, width: 2, marginTop: 2 },
 });
