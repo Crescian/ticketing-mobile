@@ -15,6 +15,7 @@ import { timeAgo } from '@/lib/format';
 
 const LOOK: Record<string, { icon: IconName; tone: Tone }> = {
   action_needed: { icon: 'flash-outline', tone: 'primary' },
+  update: { icon: 'information-circle-outline', tone: 'neutral' },
   sla_alert: { icon: 'timer-outline', tone: 'danger' },
   new_message: { icon: 'chatbubble-ellipses-outline', tone: 'info' },
   resolved_fyi: { icon: 'checkmark-done-outline', tone: 'success' },
