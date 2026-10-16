@@ -10,6 +10,7 @@ import { authHeaders } from '@/api/client';
 import { keys, useMessages, useSendMessage, useTicket, type ChatMessage } from '@/api/queries';
 import type { Attachment } from '@/api/types';
 import { useSession } from '@/auth/session';
+import { isEmployee } from '@/lib/roles';
 import { fileIcon } from '@/components/attachments';
 import { EmptyState, Txt, type IconName } from '@/components/ui';
 import { Fonts, Radius, Spacing, Type } from '@/constants/theme';
@@ -25,7 +26,9 @@ export default function ChatScreen() {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const { user } = useSession();
-  const ticket = useTicket(id);
+  const staffView = !isEmployee(user?.role);
+  // Employees open their own request; staff may be chatting on anyone's.
+  const ticket = useTicket(staffView ? '' : id);
   const messages = useMessages(id);
   const send = useSendMessage(id, user);
   const [text, setText] = useState('');
@@ -79,7 +82,11 @@ export default function ChatScreen() {
                 {messages.error ? (
                   <EmptyState icon="cloud-offline-outline" title="Couldn't load messages" message={messages.error.message} />
                 ) : (
-                  <EmptyState icon="chatbubbles-outline" title="No messages yet" message="Ask IT a question or add details about your request here." />
+                  <EmptyState
+                    icon="chatbubbles-outline"
+                    title="No messages yet"
+                    message={staffView ? 'Ask the requester for details or give them an update.' : 'Ask IT a question or add details about your request here.'}
+                  />
                 )}
               </View>
             }
@@ -122,7 +129,7 @@ export default function ChatScreen() {
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder="Message IT…"
+              placeholder={staffView ? 'Message the requester…' : 'Message IT…'}
               placeholderTextColor={theme.textMuted}
               multiline
               maxLength={1000}

@@ -34,8 +34,9 @@ export function useTicketList(status: TicketPhase, search: string) {
   });
 }
 
+// An empty id skips the request (e.g. staff in a chat on someone else's ticket).
 export function useTicket(id: string) {
-  return useQuery({ queryKey: keys.ticket(id), queryFn: () => endpoints.getTicket(id) });
+  return useQuery({ queryKey: keys.ticket(id), queryFn: () => endpoints.getTicket(id), enabled: !!id });
 }
 
 // Wraps a ticket action: on success the returned ticket replaces the cached

@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '@/auth/session';
 import { Card, InfoRow, ListRow, Screen, ScreenHeader, SectionTitle, Txt } from '@/components/ui';
 import { Brand, Fonts, Spacing } from '@/constants/theme';
+import { canReportToDeveloper, isDeveloper as isDeveloperRole, isEmployee } from '@/lib/roles';
 
 export default function ProfileScreen() {
   const { user, signOut } = useSession();
@@ -45,6 +46,22 @@ export default function ProfileScreen() {
               <InfoRow icon="business-outline" label="Company" value={[user.company?.name, user.business_unit?.name].filter(Boolean).join(' · ') || '—'} />
             </Card>
 
+            {!isEmployee(user.role) && !isDeveloperRole(user.role) ? (
+              <>
+                <SectionTitle>Work</SectionTitle>
+                <Card padded={false}>
+                  <ListRow icon="document-text-outline" label="My Requests" hint="IT requests you filed yourself" onPress={() => router.push('/my-requests')} />
+                  {canReportToDeveloper(user.role) ? (
+                    <ListRow icon="code-slash-outline" label="Report to Developer" hint="System issues, data changes, requests" onPress={() => router.push('/report-developer')} last />
+                  ) : null}
+                </Card>
+              </>
+            ) : isDeveloperRole(user.role) ? (
+              <Card padded={false}>
+                <ListRow icon="document-text-outline" label="My Requests" hint="IT requests you filed yourself" onPress={() => router.push('/my-requests')} last />
+              </Card>
+            ) : null}
+
             <SectionTitle>Settings</SectionTitle>
             <Card padded={false}>
               {user.can_update_org_info ? (
@@ -52,7 +69,7 @@ export default function ProfileScreen() {
               ) : null}
               {/* Microsoft accounts have no password here — it's managed by Microsoft. */}
               {!user.signs_in_with_microsoft ? <ListRow icon="key-outline" label="Change password" onPress={() => router.push('/profile/password')} /> : null}
-              <ListRow icon="sparkles-outline" label="Show welcome tour again" onPress={() => router.push('/welcome')} />
+              {isEmployee(user.role) ? <ListRow icon="sparkles-outline" label="Show welcome tour again" onPress={() => router.push('/welcome')} /> : null}
               <ListRow icon="log-out-outline" label="Sign out" tone="danger" onPress={confirmSignOut} last />
             </Card>
 

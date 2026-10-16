@@ -10,6 +10,9 @@ export class ApiError extends Error {
     message: string,
     public errors: Record<string, string[]> = {},
     public code?: string,
+    // The full error body, for responses with extra details (e.g. `conflict`
+    // on schedule_decision_required).
+    public data: Record<string, unknown> = {},
   ) {
     super(message);
   }
@@ -83,6 +86,7 @@ export async function api<T>(path: string, { method = 'GET', body, query }: Requ
       data.message ?? `Request failed (${response.status}).`,
       data.errors ?? {},
       data.code,
+      data,
     );
   }
 

@@ -14,9 +14,11 @@ const CHANNEL_ID = 'default';
 
 // What the server puts in every push's `data` (see docs/api/employee-mobile-api.md).
 export type PushData = {
-  type?: 'status_change' | 'on_hold' | 'new_message';
+  type?: string; // employee: status_change | on_hold | new_message; staff: action_needed | sla_alert | new_message | …
   ticket_id?: string;
   ticket_number?: string;
+  concern_id?: string;
+  audience?: 'staff'; // set on staff notifications (App\Support\StaffNotifier)
 };
 
 // Show pushes as a banner even while the app is open.
